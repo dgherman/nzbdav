@@ -28,11 +28,11 @@ public class FileProcessor(
             };
         }
 
-        // Ignore missing articles if it's not a video file.
+        // Ignore missing articles if it's not a media file (video or audio).
         // In that case, simply skip the file altogether.
-        catch (UsenetArticleNotFoundException) when (!FilenameUtil.IsVideoFile(fileInfo.FileName))
+        catch (UsenetArticleNotFoundException) when (!FilenameUtil.IsMediaFile(fileInfo.FileName))
         {
-            Log.Warning($"File `{fileInfo.FileName}` has missing articles. Skipping file since it is not a video.");
+            Log.Warning($"File `{fileInfo.FileName}` has missing articles. Skipping file since it is not a media file.");
             return null;
         }
     }

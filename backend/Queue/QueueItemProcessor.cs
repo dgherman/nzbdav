@@ -180,9 +180,9 @@ public class QueueItemProcessor(
             new RenameDuplicatesPostProcessor(dbClient).RenameDuplicates();
             new BlacklistedExtensionPostProcessor(configManager, dbClient).RemoveBlacklistedExtensions();
 
-            // validate video files found
-            if (configManager.IsEnsureImportableVideoEnabled())
-                new EnsureImportableVideoValidator(dbClient).ThrowIfValidationFails();
+            // validate media files found
+            if (configManager.IsEnsureImportableMediaEnabled())
+                new EnsureImportableMediaValidator(dbClient).ThrowIfValidationFails();
 
             // create strm files, if necessary
             if (configManager.GetImportStrategy() == "strm")

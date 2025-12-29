@@ -12,14 +12,14 @@ public class CreateStrmFilesPostProcessor(ConfigManager configManager, DavDataba
 {
     public async Task CreateStrmFilesAsync()
     {
-        // Add strm files to the download dir
-        var videoItems = dbClient.Ctx.ChangeTracker.Entries<DavItem>()
+        // Add strm files to the download dir for all media files (video and audio)
+        var mediaItems = dbClient.Ctx.ChangeTracker.Entries<DavItem>()
             .Where(x => x.State == EntityState.Added)
             .Select(x => x.Entity)
             .Where(x => x.Type != DavItem.ItemType.Directory)
-            .Where(x => FilenameUtil.IsVideoFile(x.Name));
-        foreach (var videoItem in videoItems)
-            await CreateStrmFileAsync(videoItem).ConfigureAwait(false);
+            .Where(x => FilenameUtil.IsMediaFile(x.Name));
+        foreach (var mediaItem in mediaItems)
+            await CreateStrmFileAsync(mediaItem).ConfigureAwait(false);
     }
 
     private async Task CreateStrmFileAsync(DavItem davItem)
