@@ -19,6 +19,7 @@ namespace NzbWebDAV.Clients.Usenet;
 public class MultiConnectionNntpClient(ConnectionPool<INntpClient> connectionPool, ProviderType type) : NntpClient
 {
     public ProviderType ProviderType { get; } = type;
+    public string ProviderHost { get; init; } = "";
     public int LiveConnections => connectionPool.LiveConnections;
     public int IdleConnections => connectionPool.IdleConnections;
     public int ActiveConnections => connectionPool.ActiveConnections;

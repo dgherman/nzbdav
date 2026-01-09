@@ -146,6 +146,12 @@ public class MultiProviderNntpClient(List<MultiConnectionNntpClient> providers) 
                 if (!isLastProvider && result.ResponseType == UsenetResponseType.NoArticleWithThatMessageId)
                     continue;
 
+                // Log successful provider usage
+                Log.Information("ProviderUsed: {ProviderHost} {ProviderType} {Timestamp}",
+                    provider.ProviderHost,
+                    provider.ProviderType,
+                    DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+
                 return result;
             }
             catch (Exception e) when (!e.IsCancellationException())
