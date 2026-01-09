@@ -83,6 +83,7 @@ class Program
             .AddSingleton<QueueManager>()
             .AddSingleton<ArrMonitoringService>()
             .AddSingleton<HealthCheckService>()
+            .AddSingleton<ProviderUsageTrackingService>()
             .AddScoped<DavDatabaseContext>()
             .AddScoped<DavDatabaseClient>()
             .AddScoped<DatabaseStore>()
@@ -102,6 +103,7 @@ class Program
         var app = builder.Build();
         app.Services.GetRequiredService<ArrMonitoringService>();
         app.Services.GetRequiredService<HealthCheckService>();
+        app.Services.GetRequiredService<ProviderUsageTrackingService>();
 
         // run
         app.UseMiddleware<ExceptionMiddleware>();

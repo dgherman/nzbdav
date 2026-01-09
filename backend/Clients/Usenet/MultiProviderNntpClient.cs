@@ -2,12 +2,15 @@
 using NzbWebDAV.Clients.Usenet.Models;
 using NzbWebDAV.Extensions;
 using NzbWebDAV.Models;
+using NzbWebDAV.Services;
 using Serilog;
 using UsenetSharp.Models;
 
 namespace NzbWebDAV.Clients.Usenet;
 
-public class MultiProviderNntpClient(List<MultiConnectionNntpClient> providers) : NntpClient
+public class MultiProviderNntpClient(
+    List<MultiConnectionNntpClient> providers,
+    ProviderUsageTrackingService trackingService) : NntpClient
 {
     public override Task ConnectAsync(string host, int port, bool useSsl, CancellationToken ct)
     {
@@ -146,11 +149,17 @@ public class MultiProviderNntpClient(List<MultiConnectionNntpClient> providers) 
                 if (!isLastProvider && result.ResponseType == UsenetResponseType.NoArticleWithThatMessageId)
                     continue;
 
-                // Log successful provider usage
+                // Track successful provider usage
+                var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                 Log.Information("ProviderUsed: {ProviderHost} {ProviderType} {Timestamp}",
                     provider.ProviderHost,
                     provider.ProviderType,
-                    DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+                    timestamp);
+
+                // Queue event for database insertion
+                trackingService.TrackProviderUsage(
+                    provider.ProviderHost,
+                    provider.ProviderType.ToString());
 
                 return result;
             }
