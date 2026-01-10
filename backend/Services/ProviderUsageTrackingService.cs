@@ -28,14 +28,20 @@ public class ProviderUsageTrackingService
     /// <summary>
     /// Queues a provider usage event for async database insertion
     /// </summary>
-    public void TrackProviderUsage(string providerHost, string providerType)
+    public void TrackProviderUsage(
+        string providerHost,
+        string providerType,
+        string? operationType = null,
+        long? bytesTransferred = null)
     {
         var evt = new ProviderUsageEvent
         {
             Id = Guid.NewGuid(),
             CreatedAt = DateTimeOffset.UtcNow,
             ProviderHost = providerHost,
-            ProviderType = providerType
+            ProviderType = providerType,
+            OperationType = operationType,
+            BytesTransferred = bytesTransferred
         };
 
         // Try to write to channel without blocking

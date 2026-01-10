@@ -433,10 +433,18 @@ public sealed class DavDatabaseContext() : DbContext(Options.Value)
                 .IsRequired()
                 .HasMaxLength(50);
 
+            e.Property(i => i.OperationType)
+                .HasMaxLength(50);
+
+            e.Property(i => i.BytesTransferred);
+
             e.HasIndex(i => new { i.CreatedAt })
                 .IsUnique(false);
 
             e.HasIndex(i => new { i.ProviderHost })
+                .IsUnique(false);
+
+            e.HasIndex(i => new { i.OperationType })
                 .IsUnique(false);
         });
     }

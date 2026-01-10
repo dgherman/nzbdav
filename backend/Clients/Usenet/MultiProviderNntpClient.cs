@@ -24,12 +24,12 @@ public class MultiProviderNntpClient(
 
     public override Task<UsenetStatResponse> StatAsync(SegmentId segmentId, CancellationToken cancellationToken)
     {
-        return RunFromPoolWithBackup(x => x.StatAsync(segmentId, cancellationToken), cancellationToken);
+        return RunFromPoolWithBackup(x => x.StatAsync(segmentId, cancellationToken), cancellationToken, "STAT");
     }
 
     public override Task<UsenetHeadResponse> HeadAsync(SegmentId segmentId, CancellationToken cancellationToken)
     {
-        return RunFromPoolWithBackup(x => x.HeadAsync(segmentId, cancellationToken), cancellationToken);
+        return RunFromPoolWithBackup(x => x.HeadAsync(segmentId, cancellationToken), cancellationToken, "HEAD");
     }
 
     public override Task<UsenetDecodedBodyResponse> DecodedBodyAsync
@@ -38,7 +38,7 @@ public class MultiProviderNntpClient(
         CancellationToken cancellationToken
     )
     {
-        return RunFromPoolWithBackup(x => x.DecodedBodyAsync(segmentId, cancellationToken), cancellationToken);
+        return RunFromPoolWithBackup(x => x.DecodedBodyAsync(segmentId, cancellationToken), cancellationToken, "BODY");
     }
 
     public override Task<UsenetDecodedArticleResponse> DecodedArticleAsync
@@ -47,12 +47,12 @@ public class MultiProviderNntpClient(
         CancellationToken cancellationToken
     )
     {
-        return RunFromPoolWithBackup(x => x.DecodedArticleAsync(segmentId, cancellationToken), cancellationToken);
+        return RunFromPoolWithBackup(x => x.DecodedArticleAsync(segmentId, cancellationToken), cancellationToken, "ARTICLE");
     }
 
     public override Task<UsenetDateResponse> DateAsync(CancellationToken cancellationToken)
     {
-        return RunFromPoolWithBackup(x => x.DateAsync(cancellationToken), cancellationToken);
+        return RunFromPoolWithBackup(x => x.DateAsync(cancellationToken), cancellationToken, "DATE");
     }
 
     public override async Task<UsenetDecodedBodyResponse> DecodedBodyAsync
@@ -67,7 +67,8 @@ public class MultiProviderNntpClient(
         {
             result = await RunFromPoolWithBackup(
                 x => x.DecodedBodyAsync(segmentId, OnConnectionReadyAgain, cancellationToken),
-                cancellationToken
+                cancellationToken,
+                "BODY"
             ).ConfigureAwait(false);
         }
         catch
@@ -100,7 +101,8 @@ public class MultiProviderNntpClient(
         {
             result = await RunFromPoolWithBackup(
                 x => x.DecodedArticleAsync(segmentId, OnConnectionReadyAgain, cancellationToken),
-                cancellationToken
+                cancellationToken,
+                "ARTICLE"
             ).ConfigureAwait(false);
         }
         catch
@@ -124,7 +126,8 @@ public class MultiProviderNntpClient(
     private async Task<T> RunFromPoolWithBackup<T>
     (
         Func<INntpClient, Task<T>> task,
-        CancellationToken cancellationToken
+        CancellationToken cancellationToken,
+        string? operationType = null
     ) where T : UsenetResponse
     {
         ExceptionDispatchInfo? lastException = null;
@@ -149,17 +152,32 @@ public class MultiProviderNntpClient(
                 if (!isLastProvider && result.ResponseType == UsenetResponseType.NoArticleWithThatMessageId)
                     continue;
 
+                // Extract bytes transferred if available
+                long? bytesTransferred = null;
+                if (result is UsenetDecodedBodyResponse bodyResponse)
+                {
+                    bytesTransferred = bodyResponse.Stream.Length;
+                }
+                else if (result is UsenetDecodedArticleResponse articleResponse)
+                {
+                    bytesTransferred = articleResponse.Stream.Length;
+                }
+
                 // Track successful provider usage
                 var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                Log.Information("ProviderUsed: {ProviderHost} {ProviderType} {Timestamp}",
+                Log.Information("ProviderUsed: {ProviderHost} {ProviderType} {OperationType} {BytesTransferred} {Timestamp}",
                     provider.ProviderHost,
                     provider.ProviderType,
+                    operationType,
+                    bytesTransferred,
                     timestamp);
 
                 // Queue event for database insertion
                 trackingService.TrackProviderUsage(
                     provider.ProviderHost,
-                    provider.ProviderType.ToString());
+                    provider.ProviderType.ToString(),
+                    operationType,
+                    bytesTransferred);
 
                 return result;
             }

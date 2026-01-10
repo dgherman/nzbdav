@@ -6,4 +6,6 @@ public class ProviderUsageEvent
     public DateTimeOffset CreatedAt { get; init; }
     public string ProviderHost { get; init; } = "";
     public string ProviderType { get; init; } = "";
+    public string? OperationType { get; init; }
+    public long? BytesTransferred { get; init; }
 }
