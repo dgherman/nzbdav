@@ -152,32 +152,20 @@ public class MultiProviderNntpClient(
                 if (!isLastProvider && result.ResponseType == UsenetResponseType.NoArticleWithThatMessageId)
                     continue;
 
-                // Extract bytes transferred if available
-                long? bytesTransferred = null;
-                if (result is UsenetDecodedBodyResponse bodyResponse)
-                {
-                    bytesTransferred = bodyResponse.Stream.Length;
-                }
-                else if (result is UsenetDecodedArticleResponse articleResponse)
-                {
-                    bytesTransferred = articleResponse.Stream.Length;
-                }
-
                 // Track successful provider usage
                 var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                Log.Information("ProviderUsed: {ProviderHost} {ProviderType} {OperationType} {BytesTransferred} {Timestamp}",
+                Log.Information("ProviderUsed: {ProviderHost} {ProviderType} {OperationType} {Timestamp}",
                     provider.ProviderHost,
                     provider.ProviderType,
                     operationType,
-                    bytesTransferred,
                     timestamp);
 
-                // Queue event for database insertion
+                // Queue event for database insertion (bytesTransferred=null for now)
                 trackingService.TrackProviderUsage(
                     provider.ProviderHost,
                     provider.ProviderType.ToString(),
                     operationType,
-                    bytesTransferred);
+                    null);
 
                 return result;
             }
