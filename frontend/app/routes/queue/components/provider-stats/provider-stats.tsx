@@ -1,6 +1,14 @@
-import { Card } from 'react-bootstrap';
+import { Card, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import type { ProviderStatsResponse } from '~/clients/backend-client.server';
 import styles from './provider-stats.module.css';
+
+const operationDescriptions: { [key: string]: string } = {
+    'BODY': 'Downloading article body (actual data transfer)',
+    'ARTICLE': 'Downloading complete article (headers + body)',
+    'STAT': 'Checking if article exists (no data transfer)',
+    'HEAD': 'Fetching article headers only (metadata)',
+    'DATE': 'Getting server time (system operation)'
+};
 
 export function ProviderStats({ stats }: { stats: ProviderStatsResponse | null }) {
     if (!stats || stats.totalOperations === 0) {
@@ -60,10 +68,20 @@ export function ProviderStats({ stats }: { stats: ProviderStatsResponse | null }
                                     </div>
                                     <div className={styles.operationBreakdown}>
                                         {Object.entries(provider.operationCounts).map(([opType, count]) => (
-                                            <div key={opType} className={styles.opType}>
-                                                <span className={styles.opTypeName}>{opType}:</span>
-                                                <span className={styles.opTypeCount}>{formatNumber(count)}</span>
-                                            </div>
+                                            <OverlayTrigger
+                                                key={opType}
+                                                placement="top"
+                                                overlay={
+                                                    <Tooltip id={`tooltip-${provider.providerHost}-${opType}`}>
+                                                        {operationDescriptions[opType] || opType}
+                                                    </Tooltip>
+                                                }
+                                            >
+                                                <div className={styles.opType}>
+                                                    <span className={styles.opTypeName}>{opType}:</span>
+                                                    <span className={styles.opTypeCount}>{formatNumber(count)}</span>
+                                                </div>
+                                            </OverlayTrigger>
                                         ))}
                                     </div>
                                 </div>

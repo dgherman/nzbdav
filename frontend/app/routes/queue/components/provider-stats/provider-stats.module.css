@@ -103,11 +103,22 @@
     display: flex;
     gap: 0.25rem;
     font-size: 0.875rem;
+    cursor: help;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.15s ease;
+}
+
+.opType:hover {
+    background-color: #e9ecef;
 }
 
 .opTypeName {
     color: #6c757d;
     font-weight: 500;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-decoration-color: #adb5bd;
 }
 
 .opTypeCount {
