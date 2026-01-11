@@ -45,7 +45,8 @@ export function ProviderStats({ stats: initialStats }: { stats: ProviderStatsRes
             });
     }, [selectedHours, initialStats]);
 
-    if (!stats || stats.totalOperations === 0) {
+    // Don't render at all if we've never had any stats
+    if (!initialStats) {
         return null;
     }
 
@@ -87,14 +88,18 @@ export function ProviderStats({ stats: initialStats }: { stats: ProviderStatsRes
                                 </option>
                             ))}
                         </Form.Select>
-                        <span className={styles.updated}>
-                            Updated {getTimeAgo(stats.calculatedAt)}
-                        </span>
+                        {stats && (
+                            <span className={styles.updated}>
+                                Updated {getTimeAgo(stats.calculatedAt)}
+                            </span>
+                        )}
                     </div>
                 </div>
 
-                {stats.providers.length === 0 ? (
-                    <p className={styles.noData}>No provider usage data available</p>
+                {!stats || stats.providers.length === 0 ? (
+                    <p className={styles.noData}>
+                        No provider usage data available for the selected time window
+                    </p>
                 ) : (
                     <div className={styles.providersGrid}>
                         {stats.providers.map((provider) => (
