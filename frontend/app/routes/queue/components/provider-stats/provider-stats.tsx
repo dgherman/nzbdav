@@ -3,11 +3,11 @@ import type { ProviderStatsResponse } from '~/clients/backend-client.server';
 import styles from './provider-stats.module.css';
 
 const operationDescriptions: { [key: string]: string } = {
-    'BODY': 'Downloading article body (actual data transfer)',
-    'ARTICLE': 'Downloading complete article (headers + body)',
-    'STAT': 'Checking if article exists (no data transfer)',
-    'HEAD': 'Fetching article headers only (metadata)',
-    'DATE': 'Getting server time (system operation)'
+    'BODY': 'Downloaded article content only (the actual file data, most common)',
+    'ARTICLE': 'Downloaded article with headers (less efficient, rarely used)',
+    'STAT': 'Checked if article exists (no download, just verification)',
+    'HEAD': 'Fetched article metadata only (size, date, etc.)',
+    'DATE': 'Got server time (system operation, not download-related)'
 };
 
 export function ProviderStats({ stats }: { stats: ProviderStatsResponse | null }) {
