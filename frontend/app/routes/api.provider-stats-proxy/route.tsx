@@ -1,4 +1,4 @@
-import type { Route } from "./+types/api.provider-stats-proxy";
+import type { Route } from "./+types/route";
 import { backendClient } from "~/clients/backend-client.server";
 
 export async function loader({ request }: Route.LoaderArgs) {
