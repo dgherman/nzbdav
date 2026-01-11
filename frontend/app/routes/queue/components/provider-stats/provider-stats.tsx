@@ -33,7 +33,7 @@ export function ProviderStats({ stats: initialStats }: { stats: ProviderStatsRes
 
         // Fetch stats for selected time window
         setIsLoading(true);
-        fetch(`/api/provider-stats-proxy?hours=${selectedHours}`)
+        fetch(`/provider-stats-proxy?hours=${selectedHours}`)
             .then(res => res.json())
             .then(data => {
                 setStats(data);
