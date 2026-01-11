@@ -1,4 +1,5 @@
-import { Card, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Card, OverlayTrigger, Tooltip, Form } from 'react-bootstrap';
+import { useState, useEffect } from 'react';
 import type { ProviderStatsResponse } from '~/clients/backend-client.server';
 import styles from './provider-stats.module.css';
 
@@ -10,7 +11,40 @@ const operationDescriptions: { [key: string]: string } = {
     'DATE': 'Got server time (system operation, not download-related)'
 };
 
-export function ProviderStats({ stats }: { stats: ProviderStatsResponse | null }) {
+const timeWindowOptions = [
+    { value: 24, label: 'Last 24 Hours' },
+    { value: 72, label: 'Last 3 Days' },
+    { value: 168, label: 'Last 7 Days' },
+    { value: 336, label: 'Last 14 Days' },
+    { value: 720, label: 'Last 30 Days' },
+];
+
+export function ProviderStats({ stats: initialStats }: { stats: ProviderStatsResponse | null }) {
+    const [selectedHours, setSelectedHours] = useState(24);
+    const [stats, setStats] = useState(initialStats);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        if (selectedHours === 24) {
+            // Use initial stats for default 24h
+            setStats(initialStats);
+            return;
+        }
+
+        // Fetch stats for selected time window
+        setIsLoading(true);
+        fetch(`/api/provider-stats-proxy?hours=${selectedHours}`)
+            .then(res => res.json())
+            .then(data => {
+                setStats(data);
+                setIsLoading(false);
+            })
+            .catch(err => {
+                console.error('Failed to fetch provider stats:', err);
+                setIsLoading(false);
+            });
+    }, [selectedHours, initialStats]);
+
     if (!stats || stats.totalOperations === 0) {
         return null;
     }
@@ -38,10 +72,25 @@ export function ProviderStats({ stats }: { stats: ProviderStatsResponse | null }
         <Card className={styles.statsCard}>
             <Card.Body>
                 <div className={styles.header}>
-                    <h5 className={styles.title}>Provider Usage (Last 24 Hours)</h5>
-                    <span className={styles.updated}>
-                        Updated {getTimeAgo(stats.calculatedAt)}
-                    </span>
+                    <h5 className={styles.title}>Provider Usage</h5>
+                    <div className={styles.headerControls}>
+                        <Form.Select
+                            size="sm"
+                            value={selectedHours}
+                            onChange={(e) => setSelectedHours(Number(e.target.value))}
+                            className={styles.timeWindowSelect}
+                            disabled={isLoading}
+                        >
+                            {timeWindowOptions.map(option => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </Form.Select>
+                        <span className={styles.updated}>
+                            Updated {getTimeAgo(stats.calculatedAt)}
+                        </span>
+                    </div>
                 </div>
 
                 {stats.providers.length === 0 ? (

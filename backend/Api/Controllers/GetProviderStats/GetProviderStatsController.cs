@@ -10,7 +10,15 @@ public class GetProviderStatsController(ProviderStatsService statsService) : Bas
 {
     protected override Task<IActionResult> HandleRequest()
     {
-        var stats = statsService.GetCachedStats();
+        // Extract hours parameter from query string, default to 24
+        var hoursParam = HttpContext.Request.Query["hours"].FirstOrDefault();
+        var hours = 24;
+        if (hoursParam != null && int.TryParse(hoursParam, out var parsedHours))
+        {
+            hours = parsedHours;
+        }
+
+        var stats = statsService.GetCachedStats(hours);
 
         if (stats == null)
         {
@@ -19,7 +27,8 @@ public class GetProviderStatsController(ProviderStatsService statsService) : Bas
                 Providers = new List<ProviderStats>(),
                 TotalOperations = 0,
                 CalculatedAt = DateTimeOffset.UtcNow,
-                TimeWindow = TimeSpan.FromHours(24)
+                TimeWindow = TimeSpan.FromHours(hours),
+                TimeWindowHours = hours
             }));
         }
 

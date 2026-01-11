@@ -15,9 +15,21 @@
     font-weight: 600;
 }
 
+.headerControls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.timeWindowSelect {
+    width: auto;
+    min-width: 150px;
+}
+
 .updated {
     font-size: 0.875rem;
     color: #6c757d;
+    white-space: nowrap;
 }
 
 .noData {

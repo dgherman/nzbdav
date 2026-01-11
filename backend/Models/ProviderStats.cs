@@ -15,4 +15,5 @@ public class ProviderStatsResponse
     public long TotalOperations { get; init; }
     public DateTimeOffset CalculatedAt { get; init; }
     public TimeSpan TimeWindow { get; init; }
+    public int TimeWindowHours { get; init; }
 }

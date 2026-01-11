@@ -12,8 +12,11 @@ namespace NzbWebDAV.Services;
 public class ProviderStatsService
 {
     private readonly CancellationToken _cancellationToken = SigtermUtil.GetCancellationToken();
-    private ProviderStatsResponse? _cachedStats;
+    private readonly Dictionary<int, ProviderStatsResponse> _cachedStats = new();
     private readonly object _lock = new();
+
+    // Time windows to pre-calculate (in hours)
+    private readonly int[] _timeWindows = { 24, 72, 168, 336, 720 }; // 24h, 3d, 7d, 14d, 30d
 
     public ProviderStatsService()
     {
@@ -21,20 +24,23 @@ public class ProviderStatsService
     }
 
     /// <summary>
-    /// Gets the cached provider statistics
+    /// Gets the cached provider statistics for a specific time window
     /// </summary>
-    public ProviderStatsResponse? GetCachedStats()
+    public ProviderStatsResponse? GetCachedStats(int hours)
     {
         lock (_lock)
         {
-            return _cachedStats;
+            return _cachedStats.GetValueOrDefault(hours);
         }
     }
 
     private async Task StartStatsCalculationLoop()
     {
-        // Calculate immediately on startup
-        await CalculateAndCacheStats().ConfigureAwait(false);
+        // Calculate all time windows immediately on startup
+        foreach (var hours in _timeWindows)
+        {
+            await CalculateAndCacheStats(hours).ConfigureAwait(false);
+        }
 
         while (!_cancellationToken.IsCancellationRequested)
         {
@@ -43,7 +49,11 @@ public class ProviderStatsService
                 // Wait 15 minutes before next calculation
                 await Task.Delay(TimeSpan.FromMinutes(15), _cancellationToken).ConfigureAwait(false);
 
-                await CalculateAndCacheStats().ConfigureAwait(false);
+                // Recalculate all time windows
+                foreach (var hours in _timeWindows)
+                {
+                    await CalculateAndCacheStats(hours).ConfigureAwait(false);
+                }
             }
             catch (Exception ex) when (!_cancellationToken.IsCancellationRequested)
             {
@@ -53,16 +63,16 @@ public class ProviderStatsService
         }
     }
 
-    private async Task CalculateAndCacheStats()
+    private async Task CalculateAndCacheStats(int hours)
     {
         try
         {
-            var timeWindow = TimeSpan.FromHours(24);
+            var timeWindow = TimeSpan.FromHours(hours);
             var startTime = DateTimeOffset.UtcNow.Add(-timeWindow);
 
             await using var dbContext = new DavDatabaseContext();
 
-            // Query events from last 24 hours with operation type
+            // Query events from the specified time window with operation type
             var events = await dbContext.ProviderUsageEvents
                 .Where(e => e.CreatedAt >= startTime && e.OperationType != null)
                 .Select(e => new { e.ProviderHost, e.ProviderType, e.OperationType })
@@ -73,12 +83,13 @@ public class ProviderStatsService
             {
                 lock (_lock)
                 {
-                    _cachedStats = new ProviderStatsResponse
+                    _cachedStats[hours] = new ProviderStatsResponse
                     {
                         Providers = new List<ProviderStats>(),
                         TotalOperations = 0,
                         CalculatedAt = DateTimeOffset.UtcNow,
-                        TimeWindow = timeWindow
+                        TimeWindow = timeWindow,
+                        TimeWindowHours = hours
                     };
                 }
                 return;
@@ -115,17 +126,18 @@ public class ProviderStatsService
 
             lock (_lock)
             {
-                _cachedStats = new ProviderStatsResponse
+                _cachedStats[hours] = new ProviderStatsResponse
                 {
                     Providers = providerStats,
                     TotalOperations = totalOperations,
                     CalculatedAt = DateTimeOffset.UtcNow,
-                    TimeWindow = timeWindow
+                    TimeWindow = timeWindow,
+                    TimeWindowHours = hours
                 };
             }
 
-            Log.Debug("Provider stats calculated: {TotalOperations} operations across {ProviderCount} providers",
-                totalOperations, providerStats.Count);
+            Log.Debug("Provider stats calculated for {Hours}h window: {TotalOperations} operations across {ProviderCount} providers",
+                hours, totalOperations, providerStats.Count);
         }
         catch (Exception ex)
         {
