@@ -247,6 +247,10 @@ public sealed class DavDatabaseContext() : DbContext(Options.Value)
 
             e.HasIndex(i => new { i.Category, i.Priority, i.CreatedAt })
                 .IsUnique(false);
+
+            e.HasIndex(i => new { i.PauseUntil, i.Priority, i.CreatedAt })
+                .HasDatabaseName("IX_QueueItems_PauseUntil_Priority_CreatedAt")
+                .IsUnique(false);
         });
 
         // HistoryItem
@@ -362,6 +366,10 @@ public sealed class DavDatabaseContext() : DbContext(Options.Value)
 
             e.HasIndex(h => h.DavItemId)
                 .HasFilter("\"RepairStatus\" = 3")
+                .IsUnique(false);
+
+            e.HasIndex(h => h.DavItemId)
+                .HasDatabaseName("IX_HealthCheckResults_DavItemId_General")
                 .IsUnique(false);
         });
 
