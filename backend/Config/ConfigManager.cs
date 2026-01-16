@@ -141,6 +141,40 @@ public class ConfigManager
         );
     }
 
+    public int GetConnectionsPerStream()
+    {
+        return int.Parse(
+            StringUtil.EmptyToNull(GetConfigValue("usenet.connections-per-stream"))
+            ?? StringUtil.EmptyToNull(Environment.GetEnvironmentVariable("CONNECTIONS_PER_STREAM"))
+            ?? "10"  // Default per stream workers
+        );
+    }
+
+    public int GetStreamBufferSize()
+    {
+        return int.Parse(
+            StringUtil.EmptyToNull(GetConfigValue("usenet.stream-buffer-size"))
+            ?? StringUtil.EmptyToNull(Environment.GetEnvironmentVariable("STREAM_BUFFER_SIZE"))
+            ?? "200"  // Increased from 100 for better throughput
+        );
+    }
+
+    public int GetMaxQueueConnections()
+    {
+        return int.Parse(
+            StringUtil.EmptyToNull(GetConfigValue("usenet.max-queue-connections"))
+            ?? "1"  // Default to 1 to maximize streaming connections
+        );
+    }
+
+    public int GetMaxRepairConnections()
+    {
+        return int.Parse(
+            StringUtil.EmptyToNull(GetConfigValue("usenet.max-repair-connections"))
+            ?? "1"  // Default to 1 to maximize streaming connections
+        );
+    }
+
     public SemaphorePriorityOdds GetStreamingPriority()
     {
         var stringValue = StringUtil.EmptyToNull(GetConfigValue("usenet.streaming-priority"));
