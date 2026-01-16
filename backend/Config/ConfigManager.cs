@@ -146,7 +146,7 @@ public class ConfigManager
         return int.Parse(
             StringUtil.EmptyToNull(GetConfigValue("usenet.connections-per-stream"))
             ?? StringUtil.EmptyToNull(Environment.GetEnvironmentVariable("CONNECTIONS_PER_STREAM"))
-            ?? "10"  // Default per stream workers
+            ?? "20"  // Workers per stream (not global limit)
         );
     }
 
